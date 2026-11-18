@@ -31,3 +31,9 @@ dev = [
     "ruff (>=0.15.17,<0.16.0)",
     "mypy (>=2.1.0,<3.0.0)"
 ]
+
+[[tool.poetry.source]]
+name = "tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
