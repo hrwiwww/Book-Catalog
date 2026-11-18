@@ -111,9 +111,7 @@ class OpenLibraryClient(BaseApiClient):
 
         # Cover URL
         if cover_id := doc.get("cover_i"):
-            result["cover_url"] = (
-                f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
-            )
+            result["cover_url"] = self._get_cover_url(cover_id)
 
         # Subjects (темы)
         if subjects := doc.get("subject"):

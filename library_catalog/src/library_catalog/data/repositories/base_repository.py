@@ -1,5 +1,6 @@
 from typing import Generic, TypeVar, Type
 from uuid import UUID
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 T = TypeVar('T')
@@ -12,7 +13,11 @@ class BaseRepository(Generic[T]):
 
     async def create(self, **kwargs) -> T:
         """Создать запись."""
-        pass
+        obj = self.model(**kwargs)
+        self.session.add(obj)
+        await self.session.commit()
+        await self.session.refresh(obj)
+        return obj
 
     async def get_by_id(self, id: UUID) -> T | None:
         """
@@ -21,15 +26,27 @@ class BaseRepository(Generic[T]):
         📝 Примечание: session.get() автоматически работает с primary key модели,
         независимо от его названия (id, book_id, user_id и т.д.)
         """
-        pass
+        return await self.session.get(self.model, id)
 
     async def update(self, id: UUID, **kwargs) -> T | None:
         """Обновить запись."""
-        pass
+        obj = await self.get_by_id(id)
+        if obj is None:
+            return None
+        for key, value in kwargs.items():
+            setattr(obj, key, value)
+        await self.session.commit()
+        await self.session.refresh(obj)
+        return obj
 
     async def delete(self, id: UUID) -> bool:
         """Удалить запись."""
-        pass
+        obj = await self.get_by_id(id)
+        if obj is None:
+            return False
+        await self.session.delete(obj)
+        await self.session.commit()
+        return True
 
     async def get_all(
             self,
@@ -37,4 +54,7 @@ class BaseRepository(Generic[T]):
             offset: int = 0,
     ) -> list[T]:
         """Получить все записи с пагинацией."""
-        pass
+        result = await self.session.execute(
+            select(self.model).limit(limit).offset(offset)
+        )
+        return list(result.scalars().all())
